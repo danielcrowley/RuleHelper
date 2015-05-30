@@ -1,5 +1,9 @@
 RuleHelper
 ======
+Adds all Properties, DataViews, and Lookups to Sublimes AutoComplete.
+
+Getting Started
+-------------
 
 In sublime go to Preferences=>Browse Packages
 
