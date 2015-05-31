@@ -1,29 +1,32 @@
-# Extends Sublime Text autocompletion to find matches in all open
-# files. By default, Sublime only considers words from the current file.
-
 import sublime_plugin
 import sublime
 import os
+import json
 RuleRepository="D:\\Documents\\Rules\\"
-class RuleHelper(sublime_plugin.EventListener):
-    
-    def on_query_completions(self, view, prefix, locations):
-        words = []
 
-        for folder in ["Properties","DataViews","Lookups"]:
+ScriptDirectory=os.path.dirname(os.path.realpath(__file__))
+
+class RuleHelper(sublime_plugin.EventListener):
+  
+    def on_pre_save_async(view, self):
+        j_output={}
+        j_output['scope']='source.json' 
+        words = []
+        print ('start')
+        for folder in ["Properties","Dataviews","Lookups"]:
             for root, dirs, files in os.walk(RuleRepository+"rules\\"+folder):
                 for file in files:
                     if file.endswith(".json"):
-                        words.append(file.replace(".json",""))
-        print (words)
+                        with open(os.path.join(root,file), 'r',encoding="utf8") as f: 
+                            try:
+                                field=json.load(f)
+                                Description=field['Description']
+                            except Exception:
+                                Description='Bad Json' 
+                        words.append(file.replace(".json","")+'\t    '+folder+" : "+Description) 
 
-        matches = [(w, w.replace('$', '\\$')) for w in words]
-        return matches
-
-
-if sublime.version() >= '3000':
-  def is_empty_match(match):
-    return match.empty()
-else:
-  def is_empty_match(match):
-    return match is None
+        j_output['completions'] = [{'trigger': w, 'contents':w[:str(w).find("\t")]} for w in words]
+        
+        with open(ScriptDirectory+'\\rapptr.sublime-completions','w+') as output:
+            json.dump(j_output, output,indent=4)
+        
